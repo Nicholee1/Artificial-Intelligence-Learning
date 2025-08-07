@@ -92,3 +92,202 @@ response = chain.invoke({"topic": "lawyers", "joke_count": 3})
 print(response)
 
 ```
+
+## Chains_extended
+An example to add output format and word count in the chain.
+```python
+# Define additional processing steps using RunnableLambda
+uppercase_output = RunnableLambda(lambda x: x.upper())
+count_words = RunnableLambda(lambda x: f"Word count: {len(x.split())}\n{x}")
+
+# Create the combined chain using LangChain Expression Language (LCEL)
+chain = prompt_template | model | StrOutputParser() | uppercase_output | count_words
+
+# Run the chain
+result = chain.invoke({"topic": "lawyers", "joke_count": 3})
+
+# Output
+print(result)
+```
+
+## Chains_parallel
+并行运算，先构建需要并行运行的chain，然后再对两者通过RunnableParallel并行计算。
+
+```python
+from dotenv import load_dotenv
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema.output_parser import StrOutputParser
+from langchain.schema.runnable import RunnableParallel, RunnableLambda
+from langchain_ollama import ChatOllama
+
+# Load environment variables from .env
+load_dotenv()
+
+# Create a ChatOpenAI model
+model = ChatOllama(model="llama3.1:8b")
+
+# Define prompt template
+prompt_template = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You are an expert product reviewer."),
+        ("human", "List the main features of the product {product_name}."),
+    ]
+)
+
+
+# Define pros analysis step
+def analyze_pros(features):
+    pros_template = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are an expert product reviewer."),
+            (
+                "human",
+                "Given these features: {features}, list the pros of these features.",
+            ),
+        ]
+    )
+    return pros_template.format_prompt(features=features)
+
+
+# Define cons analysis step
+def analyze_cons(features):
+    cons_template = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are an expert product reviewer."),
+            (
+                "human",
+                "Given these features: {features}, list the cons of these features.",
+            ),
+        ]
+    )
+    return cons_template.format_prompt(features=features)
+
+
+# Combine pros and cons into a final review
+def combine_pros_cons(pros, cons):
+    return f"Pros:\n{pros}\n\nCons:\n{cons}"
+
+
+# Simplify branches with LCEL
+pros_branch_chain = (
+    RunnableLambda(lambda x: analyze_pros(x)) | model | StrOutputParser()
+)
+
+cons_branch_chain = (
+    RunnableLambda(lambda x: analyze_cons(x)) | model | StrOutputParser()
+)
+
+# Create the combined chain using LangChain Expression Language (LCEL)
+chain = (
+    prompt_template
+    | model
+    | StrOutputParser()
+    | RunnableParallel(branches={"pros": pros_branch_chain, "cons": cons_branch_chain})
+    | RunnableLambda(lambda x: combine_pros_cons(x["branches"]["pros"], x["branches"]["cons"]))
+)
+
+# Run the chain
+result = chain.invoke({"product_name": "MacBook Pro"})
+
+# Output
+print(result)
+
+```
+
+## Chain_branching
+branching可以用来处理不同的角度如积极的/消极的/中性的/，通过定义不同角度的feedback template定义模型的prompt边界
+```python
+from dotenv import load_dotenv
+from langchain.prompts import ChatPromptTemplate
+from langchain.schema.output_parser import StrOutputParser
+from langchain.schema.runnable import RunnableBranch
+from langchain_ollama import ChatOllama
+
+# Load environment variables from .env
+load_dotenv()
+
+# Create a ChatOpenAI model
+model = ChatOllama(model="llama3.1:8b")
+
+# Define prompt templates for different feedback types
+positive_feedback_template = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You are a helpful assistant."),
+        ("human",
+         "Generate a thank you note for this positive feedback: {feedback}."),
+    ]
+)
+
+negative_feedback_template = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You are a helpful assistant."),
+        ("human",
+         "Generate a response addressing this negative feedback: {feedback}."),
+    ]
+)
+
+neutral_feedback_template = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You are a helpful assistant."),
+        (
+            "human",
+            "Generate a request for more details for this neutral feedback: {feedback}.",
+        ),
+    ]
+)
+
+escalate_feedback_template = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You are a helpful assistant."),
+        (
+            "human",
+            "Generate a message to escalate this feedback to a human agent: {feedback}.",
+        ),
+    ]
+)
+
+# Define the feedback classification template
+classification_template = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You are a helpful assistant."),
+        ("human",
+         "Classify the sentiment of this feedback as positive, negative, neutral, or escalate: {feedback}."),
+    ]
+)
+
+# Define the runnable branches for handling feedback
+branches = RunnableBranch(
+    (
+        lambda x: "positive" in x,
+        positive_feedback_template | model | StrOutputParser()  # Positive feedback chain
+    ),
+    (
+        lambda x: "negative" in x,
+        negative_feedback_template | model | StrOutputParser()  # Negative feedback chain
+    ),
+    (
+        lambda x: "neutral" in x,
+        neutral_feedback_template | model | StrOutputParser()  # Neutral feedback chain
+    ),
+    escalate_feedback_template | model | StrOutputParser()
+)
+
+# Create the classification chain
+classification_chain = classification_template | model | StrOutputParser()
+
+# Combine classification and response generation into one chain
+chain = classification_chain | branches
+
+# Run the chain with an example review
+# Good review - "The product is excellent. I really enjoyed using it and found it very helpful."
+# Bad review - "The product is terrible. It broke after just one use and the quality is very poor."
+# Neutral review - "The product is okay. It works as expected but nothing exceptional."
+# Default - "I'm not sure about the product yet. Can you tell me more about its features and benefits?"
+
+review = "The product is terrible. It broke after just one use and the quality is very poor."
+result = chain.invoke({"feedback": review})
+
+# Output the result
+print(result)
+
+```
