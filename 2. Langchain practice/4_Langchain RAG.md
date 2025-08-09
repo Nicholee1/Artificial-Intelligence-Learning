@@ -1,15 +1,16 @@
-![RAG](../image/RAG.png)
+![RAG](../Image/RAG.png)
 RAG（检索-增强-生成）
 通过额外的Doc编码到Vector DB，结合用户输入的query进行相似性搜索。
-- [RAG Basic](#RAG%20Basic)
-- [RAG Basic metadata](#RAG%20Basic%20metadata)
-- [RAG Text Embedding](#RAG%20Text%20Embedding)
-- [RAG Retriever](#RAG%20Retriever)
-- [RAG Conversational](#RAG%20Conversational)
-- [RAG with Web scrape Basic](#RAG%20with%20Web%20scrape%20Basic)
-- [RAG WEB scrape with firecrawl](#RAG%20WEB%20scrape%20with%20firecrawl)
+- [RAG-Basic](#RAG-Basic)
+- [RAG-Basic-metadata](#RAG-Basic-metadata)
+- [RAG-Text-Embedding](#RAG-Text-Embedding)
+- [RAG-Retriever](#RAG-Retriever)
+- [RAG-Conversational](#RAG-Conversational)
+- [RAG-with-Web-scrape-Basic](#RAG-with-Web-scrape-Basic)
+- [RAG-WEB-scrape-with-firecrawl](#RAG-WEB-scrape-with-firecrawl)
 
-## RAG Basic
+
+## RAG-Basic
 
 Code 1: load additional doc to Vector database.
 ```python
@@ -134,7 +135,7 @@ great Nausithous, who reigned over the Phaeacians. Nausithous had two
 sons Rhexenor and Alcinous;58 Apollo killed the first of them while he
 ```
 
-## RAG Basic metadata
+## RAG-Basic-metadata
 Metadata可以用来给文档提供隐形的骨架，提升检索的精度，增强结果的可信度，支持复杂的业务逻辑
 ```python
 
@@ -154,7 +155,7 @@ Metadata可以用来给文档提供隐形的骨架，提升检索的精度，增
     docs = text_splitter.split_documents(documents)
 ```
 
-## RAG Text Embedding
+## RAG-Text-Embedding
 不同的Splitting分割方式会有不同的特点，
 通用场景下 Recursive CharacterTextSplitter会更常用一些
 
@@ -247,7 +248,7 @@ print("Embedding demonstrations for OpenAI and Hugging Face completed.")
 
 ```
 
-## RAG Retriever
+## RAG-Retriever
 向量相似性搜索/最大边界相关性/相似性评分搜索
 ```python
 #1. Similarity search
@@ -280,7 +281,7 @@ embeddings,
 )
 ```
 
-## RAG Conversational
+## RAG-Conversational
 一组RAG的对话，同时存储chat_history 来进行有记忆的回答
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '10px'}}}%%
@@ -419,7 +420,7 @@ AI: Brandon Hancock, a person associated with the YouTube channel where tutorial
 You: exit
 ```
 
-## RAG with Web scrape Basic
+## RAG-with-Web-scrape-Basic
 爬取Apple.com最新的产品信息
 ```mermaid
 %%{init: {'themeVariables': {'fontSize': '10px'}}}%%
@@ -521,7 +522,7 @@ A subscription is required for Apple Arcade, Apple Fitness+, Apple Music, and Ap
 Source: https://www.apple.com/
 ```
 
-## RAG WEB scrape with firecrawl
+## RAG-WEB-scrape-with-firecrawl
 
 Firecrawl: a scrape tool for AI model, a few free credit when you sign up.
 ```mermaid
