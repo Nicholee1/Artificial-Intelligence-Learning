@@ -1,13 +1,13 @@
-![[Pasted image 20250807205358.png]]
+![RAG](../image/RAG.png)
 RAG（检索-增强-生成）
 通过额外的Doc编码到Vector DB，结合用户输入的query进行相似性搜索。
-- [[#RAG Basic|RAG Basic]]
-- [[#RAG Basic metadata|RAG Basic metadata]]
-- [[#RAGTextEmbedding|RAGTextEmbedding]]
-- [[#RAGretriever|RAGretriever]]
-- [[#RAG Conversational|RAG Conversational]]
-- [[#RAG with Web scrape Basic|RAG with Web scrape Basic]]
-- [[#RAG WEB scrape with firecrawl|RAG WEB scrape with firecrawl]]
+- [RAG Basic](#RAG%20Basic)
+- [RAG Basic metadata](#RAG%20Basic%20metadata)
+- [RAG Text Embedding](#RAG%20Text%20Embedding)
+- [RAG Retriever](#RAG%20Retriever)
+- [RAG Conversational](#RAG%20Conversational)
+- [RAG with Web scrape Basic](#RAG%20with%20Web%20scrape%20Basic)
+- [RAG WEB scrape with firecrawl](#RAG%20WEB%20scrape%20with%20firecrawl)
 
 ## RAG Basic
 
