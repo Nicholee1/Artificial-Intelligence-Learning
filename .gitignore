@@ -8,5 +8,6 @@ Thumbs.db # Windows
 # Backup files
 *.bak
 *.tmp
+*.pdf
 lib/
 Untitled/
