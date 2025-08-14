@@ -1,4 +1,10 @@
-## Chain Basic
+- [Chain-Basic](#Chain-Basic)
+- [Chains-under-the-hood](#Chains-under-the-hood)
+- [Chains-extended](#Chains-extended)
+- [Chains-parallel](#Chains-parallel)
+- [Chain-branching](#Chain-branching)
+
+## Chain-Basic
 Chain can combine prompt template, model and stdout in one line.
 ```python
 from dotenv import load_dotenv
@@ -53,7 +59,7 @@ Because it was feeling ruff in court!
 Because they're already trained to twist the truth and make a joke out of anything! (ba-dum-tss)
 ```
 
-## Chains under the hood
+## Chains-under-the-hood
 
 RunnableLambda is a flexible plugin in LangChain, it helps us to involve function and lambda expression to LangChain runnable object.
 ```python
@@ -93,7 +99,7 @@ print(response)
 
 ```
 
-## Chains_extended
+## Chains-extended
 An example to add output format and word count in the chain.
 ```python
 # Define additional processing steps using RunnableLambda
@@ -110,7 +116,7 @@ result = chain.invoke({"topic": "lawyers", "joke_count": 3})
 print(result)
 ```
 
-## Chains_parallel
+## Chains-parallel
 并行运算，先构建需要并行运行的chain，然后再对两者通过RunnableParallel并行计算。
 
 ```python
@@ -194,7 +200,7 @@ print(result)
 
 ```
 
-## Chain_branching
+## Chain-branching
 branching可以用来处理不同的角度如积极的/消极的/中性的/，通过定义不同角度的feedback template定义模型的prompt边界
 ```python
 from dotenv import load_dotenv

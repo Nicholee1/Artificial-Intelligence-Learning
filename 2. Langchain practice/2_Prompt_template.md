@@ -1,4 +1,8 @@
-## String prompt template
+- [String-prompt-template](#String-prompt-template)
+- [Chat-Prompt-Template](#Chat-Prompt-Template)
+- [Messages-Placeholder](#Messages-Placeholder)
+
+## String-prompt-template
 
 ```Python
 from langchain.prompts import ChatPromptTemplate
@@ -22,7 +26,7 @@ print("\n----- Prompt with Multiple Placeholders -----\n")
 print(prompt)
 ```
 
-## ChatPromptTemplate
+## Chat-Prompt-Template
 
 ```python
 #PART 3: Prompt with System and Human Messages (Using Tuples)
@@ -58,7 +62,7 @@ print(prompt)
 ```
 
 
-## MessagesPlaceholder
+## Messages-Placeholder
 As a supplement for chatPromptTemplate, 
 ``` python 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder

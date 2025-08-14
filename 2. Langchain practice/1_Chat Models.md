@@ -1,5 +1,9 @@
+- [Replace-OpenAI-model-to-llama-in-Ollama](#Replace-OpenAI-model-to-llama-in-Ollama)
+- [1-Chat-model-basic](#1-Chat-model-basic)
+- [2-chat-model-basic-conversation](#2-chat-model-basic-conversation)
+- [3-Chat-model-alternatives](#3-Chat-model-alternatives)
 
-## Replace OpenAI model to llama in Ollama
+## Replace-OpenAI-model-to-llama-in-Ollama
 
 Since OpenAI cannot be used in China, maintaining a llama model in Ollama
 ```Python
@@ -11,7 +15,7 @@ model = Ollama(model="llama3.1:8b")
 ```
 
 
-## 1_Chat model basic
+## 1-Chat-model-basic
 Basic model invoke in langchain
 ```python
 # Chat Model Documents: https://python.langchain.com/v0.2/docs/integrations/chat/
@@ -34,7 +38,7 @@ print(result)
 
 ```
 
-## 2_chat_model_basic_conversation
+## 2-chat-model-basic-conversation
 
 import different conversation like SystemMessage/AIMessage/HumanMessage
 ```python
@@ -77,7 +81,7 @@ print(f"Answer from AI: {result}")
 
 ```
 
-## 3_Chat_model_alternatives
+## 3-Chat-model-alternatives
 
 ``` python
 from langchain_google_genai import ChatGoogleGenerativeAI
