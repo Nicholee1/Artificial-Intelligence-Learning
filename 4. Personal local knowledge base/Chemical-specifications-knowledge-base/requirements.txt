@@ -1,0 +1,34 @@
+# PDF处理依赖
+pdfplumber>=0.9.0
+PyMuPDF>=1.23.0
+pdfminer.six>=20221105
+
+# 数据处理依赖
+pandas>=1.5.0
+numpy>=1.21.0
+Pillow>=9.0.0
+openpyxl>=3.0.0
+
+# 机器学习和向量化依赖
+sentence-transformers>=2.2.0
+chromadb>=1.0.0
+torch>=2.5.0
+
+# 数据可视化依赖
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# AI模型API依赖
+openai>=1.0.0
+requests>=2.28.0
+anthropic>=0.3.0
+
+# Web API依赖
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# 进度条和工具
+tqdm>=4.64.0
+
+# 其他工具
+python-dotenv>=1.0.0
