@@ -1,14 +1,18 @@
-import pdfplumber
 import fitz  # PyMuPDF
-from pdfminer.high_level import extract_text
-import pandas as pd
-import json
+import camelot
+import pdfplumber
+from pdfminer.high_level import extract_text as pdfminer_extract_text
 import base64
-from PIL import Image
 import io
-import re
-from typing import Dict, List, Any, Optional
 import os
+import re
+import json
+from PIL import Image
+from transformers import CLIPModel, CLIPProcessor
+import torch
+from typing import List, Dict, Any, Optional, Tuple
+import pandas as pd
+
 
 class ChemicalPDFProcessor:
     """化工专业PDF文档处理器，专门用于处理设计规定等复杂文档"""
@@ -16,14 +20,36 @@ class ChemicalPDFProcessor:
     def __init__(self, pdf_path: str):
         self.pdf_path = pdf_path
         self.extracted_data = {
-            'metadata': {},
-            'pages': [],
-            'tables': [],
-            'images': [],
-            'text_content': '',
-            'structured_data': {}
+            "text": "",
+            "tables": [],
+            "images": [],
+            "shapes": [],
+            "page_count": 0
         }
+        self.clip_model = None
+        self.clip_processor = None
+        self.init_clip_model()
+
+    def init_clip_model(self):
+        try:
+            self.clip_model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
+            self.clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+        except Exception as e:
+            print(f"初始化CLIP模型时出错: {e}")
+
+    def extract_full_content(self) -> Dict[str, Any]:
+        self.extract_text_content()
+        self.extract_tables()
+        self.extract_images()
+        return self.extracted_data
+
+    def extract_text(self) -> str:
+        """保持向后兼容：调用 extract_text_content"""
+        return self.extract_text_content()
     
+
+
+
     def extract_metadata(self) -> Dict[str, Any]:
         """提取PDF元数据"""
         try:
@@ -45,95 +71,151 @@ class ChemicalPDFProcessor:
         return self.extracted_data['metadata']
     
     def extract_text_content(self) -> str:
-        """使用多种方法提取文本内容，智能去重确保最佳效果"""
-        all_text = []
-        text_sources = []
-        
+        """多源提取 + 页眉页脚去除 + 编码清洗"""
+        candidates: List[Tuple[str, str]] = []  # (source, text)
+
         # 方法1: pdfplumber - 保持布局
         try:
             with pdfplumber.open(self.pdf_path) as pdf:
-                pdfplumber_text = []
+                self.extracted_data["page_count"] = len(pdf.pages)
+                pages = []
                 for page in pdf.pages:
-                    text = page.extract_text()
-                    if text:
-                        pdfplumber_text.append(text)
-                if pdfplumber_text:
-                    all_text.append('\n'.join(pdfplumber_text))
-                    text_sources.append('pdfplumber')
+                    t = page.extract_text() or ""
+                    pages.append(t)
+                text = "\n".join(pages)
+                if text.strip():
+                    candidates.append(("pdfplumber", text))
         except Exception as e:
             print(f"pdfplumber提取失败: {e}")
-        
+
         # 方法2: PyMuPDF - 快速提取
         try:
             doc = fitz.open(self.pdf_path)
-            pymupdf_text = []
-            for page in doc:
-                text = page.get_text()
-                if text:
-                    pymupdf_text.append(text)
+            pages = []
+            for p in doc:
+                t = p.get_text("text") or ""
+                pages.append(t)
             doc.close()
-            if pymupdf_text:
-                all_text.append('\n'.join(pymupdf_text))
-                text_sources.append('pymupdf')
+            text = "\n".join(pages)
+            if text.strip():
+                candidates.append(("pymupdf", text))
         except Exception as e:
             print(f"PyMuPDF提取失败: {e}")
-        
+
         # 方法3: PDFMiner - 精确提取
         try:
-            miner_text = extract_text(self.pdf_path)
-            if miner_text:
-                all_text.append(miner_text)
-                text_sources.append('pdfminer')
+            miner_text = pdfminer_extract_text(self.pdf_path) or ""
+            if miner_text.strip():
+                candidates.append(("pdfminer", miner_text))
         except Exception as e:
             print(f"PDFMiner提取失败: {e}")
-        
-        # 智能合并和去重
-        if len(all_text) == 1:
-            # 只有一个方法成功，直接使用
-            final_text = all_text[0]
-        else:
-            # 多个方法成功，选择最长的（通常最完整）
-            final_text = max(all_text, key=len)
-            print(f"使用 {text_sources[all_text.index(final_text)]} 的提取结果（最完整）")
-        
-        self.extracted_data['text_content'] = final_text
-        self.extracted_data['text_sources'] = text_sources
-        return final_text
+
+        if not candidates:
+            self.extracted_data['text_content'] = ""
+            self.extracted_data['text_sources'] = []
+            return ""
+
+        # 选择内容最丰富的来源
+        best_source, best_text = max(candidates, key=lambda x: len(x[1]))
+
+        # 去除页眉页脚（基于跨页重复的首行/尾行启发式）
+        cleaned = self._remove_headers_footers(best_text)
+        cleaned = self._clean_chemical_symbols(cleaned)
+
+        self.extracted_data['text_content'] = cleaned
+        self.extracted_data['text_sources'] = [s for s, _ in candidates]
+        return cleaned
     
-    def extract_tables(self) -> List[Dict[str, Any]]:
-        """提取表格数据，保持结构"""
-        tables_data = []
-        
+    def extract_tables_with_camelot(self) -> List[Dict[str, Any]]:
+        """使用Camelot提取表格数据（内部工具，供 extract_tables 调用）"""
+        tables_data: List[Dict[str, Any]] = []
+        lattice_tables = None
+        stream_tables = None
         try:
-            with pdfplumber.open(self.pdf_path) as pdf:
-                for page_num, page in enumerate(pdf.pages, 1):
-                    tables = page.extract_tables()
-                    
-                    for table_num, table in enumerate(tables):
-                        if table and len(table) > 1:  # 确保表格有数据
-                            # 转换为DataFrame便于处理
-                            df = pd.DataFrame(table[1:], columns=table[0])
-                            
-                            # 清理数据
-                            df = df.dropna(how='all').dropna(axis=1, how='all')
-                            
-                            table_info = {
-                                'page_number': page_num,
-                                'table_number': table_num + 1,
-                                'headers': table[0] if table[0] else [],
-                                'data': df.to_dict('records'),
-                                'shape': df.shape,
-                                'raw_table': table
-                            }
-                            
-                            tables_data.append(table_info)
-                            
+            lattice_tables = camelot.read_pdf(
+                self.pdf_path,
+                flavor='lattice',
+                pages='all'
+            )
         except Exception as e:
-            print(f"提取表格时出错: {e}")
-        
-        self.extracted_data['tables'] = tables_data
+            print(f"Camelot lattice 提取失败: {e}")
+        try:
+            stream_tables = camelot.read_pdf(
+                self.pdf_path,
+                flavor='stream',
+                pages='all'
+            )
+        except Exception as e:
+            print(f"Camelot stream 提取失败: {e}")
+
+        combined = []
+        if lattice_tables:
+            combined += [(t, 'lattice') for t in list(lattice_tables)]
+        if stream_tables:
+            combined += [(t, 'stream') for t in list(stream_tables)]
+
+        seen: set = set()
+        for table, flavor in combined:
+            bbox = getattr(table, 'bbox', None)
+            df = table.df.copy() if hasattr(table, 'df') else pd.DataFrame()
+            if not df.empty:
+                df = df.dropna(how='all').dropna(axis=1, how='all')
+
+            # 更稳健的去重键：优先使用bbox；否则使用(page, shape, headers)
+            if bbox is not None:
+                try:
+                    bbox_key = tuple(round(float(v), 2) for v in bbox)
+                except Exception:
+                    bbox_key = ('no-bbox',)
+                key = (getattr(table, 'page', None), bbox_key)
+            else:
+                headers_tuple = tuple(df.iloc[0].tolist()) if not df.empty else ()
+                key = (getattr(table, 'page', None), df.shape, headers_tuple)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            context_text = None
+            if bbox is not None and getattr(table, 'page', None) is not None:
+                try:
+                    context_text = self._get_table_context(getattr(table, 'page', 1) - 1, bbox)
+                except Exception:
+                    context_text = None
+
+            # 提取准确率（如果可用）
+            accuracy = None
+            try:
+                accuracy = getattr(table, 'accuracy', None)
+                if accuracy is None and hasattr(table, 'parsing_report'):
+                    pr = getattr(table, 'parsing_report', {})
+                    if isinstance(pr, dict):
+                        accuracy = pr.get('accuracy')
+            except Exception:
+                accuracy = None
+
+            table_info = {
+                'page_number': getattr(table, 'page', None),
+                'table_number': len(tables_data) + 1,
+                'bbox': getattr(table, 'bbox', None),
+                'headers': df.iloc[0].tolist() if not df.empty else [],
+                'data': df.iloc[1:].to_dict('records') if not df.empty else [],
+                'shape': df.shape if not df.empty else (0, 0),
+                'accuracy': accuracy,
+                'context': context_text,
+                'source': f'camelot-{flavor}'
+            }
+            tables_data.append(table_info)
+
         return tables_data
-    
+
+    def extract_tables(self) -> List[Dict[str, Any]]:
+        tables = []
+
+        camelot_tables = self.extract_tables_with_camelot()
+        tables.extend(camelot_tables)
+        self.extracted_data['tables'] = tables
+        return tables
+
     def extract_images(self) -> List[Dict[str, Any]]:
         """提取图像和图表"""
         images_data = []
@@ -402,6 +484,54 @@ class ChemicalPDFProcessor:
         print(f"原PDF文件保持不变: {self.pdf_path}")
         return output_path
     
+    def _clean_chemical_symbols(self, text: str) -> str:
+        """清理化工特殊符号，修复常见的编码问题"""
+        symbol_map = {
+            "ï¼š": "：", "â„ƒ": "℃", "ï¼ž": ">", "ï¼œ": "<",
+            "ï¼…": "%", "â€“": "–", "â€”": "—", "ï¼Œ": "，",
+            "ï¼Ž": "．", "Î¦": "φ", "MPa": "MPa", "m³": "m³"
+        }
+        for wrong, correct in symbol_map.items():
+            text = text.replace(wrong, correct)
+        return text
+
+    def _remove_headers_footers(self, text: str) -> str:
+        """启发式去页眉页脚：移除在全文中高频重复且较短的行"""
+        lines = [ln.strip() for ln in text.split("\n")]
+        freq: Dict[str, int] = {}
+        for ln in lines:
+            if not ln:
+                continue
+            if 3 <= len(ln) <= 80:
+                freq[ln] = freq.get(ln, 0) + 1
+        # 统计阈值：出现次数>=3 且占比较高的候选视为页眉/页脚
+        threshold = max(3, int(0.02 * len(lines)))
+        headers_footers = {ln for ln, c in freq.items() if c >= threshold}
+        if not headers_footers:
+            return text
+        cleaned_lines = [ln for ln in lines if ln not in headers_footers]
+        return "\n".join(cleaned_lines)
+
+    def _get_table_context(self, page_index: int, bbox: Any, margin: int = 20) -> Optional[str]:
+        """获取表格周边的上下文文本（基于 pdfplumber 裁剪）"""
+        try:
+            if bbox is None:
+                return None
+            x0, y0, x1, y1 = bbox
+            with pdfplumber.open(self.pdf_path) as pdf:
+                if page_index < 0 or page_index >= len(pdf.pages):
+                    return None
+                page = pdf.pages[page_index]
+                # 扩大边界获取上下文
+                rx0 = max(0, x0 - margin)
+                ry0 = max(0, y0 - margin)
+                rx1 = min(page.width, x1 + margin)
+                ry1 = min(page.height, y1 + margin)
+                region = page.crop((rx0, ry0, rx1, ry1))
+                return (region.extract_text() or "").strip()
+        except Exception:
+            return None
+
     def process_full_document(self):
         """完整处理文档"""
         print("开始处理化工专业PDF文档...")
@@ -439,7 +569,7 @@ class ChemicalPDFProcessor:
 
 def main():
     """主函数"""
-    pdf_path = "./PDF/KLDL-03c-04-05PD-B58-2021 管道专业详细设计工程设计文件内容和深度统一规定.pdf"
+    pdf_path = ""
     
     if not os.path.exists(pdf_path):
         print(f"PDF文件不存在: {pdf_path}")

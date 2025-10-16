@@ -2,6 +2,8 @@
 pdfplumber>=0.9.0
 PyMuPDF>=1.23.0
 pdfminer.six>=20221105
+camelot-py>=0.11.0  # 新增：增强表格提取
+ghostscript>=0.7  # 新增：Camelot依赖（处理PDF渲染）
 
 # 数据处理依赖
 pandas>=1.5.0
@@ -13,6 +15,8 @@ openpyxl>=3.0.0
 sentence-transformers>=2.2.0
 chromadb>=1.0.0
 torch>=2.5.0
+transformers>=4.30.0  # 新增：CLIP模型依赖
+pdf2image>=1.16.3  # 新增：PDF转图像（辅助图像识别）
 
 # 数据可视化依赖
 matplotlib>=3.5.0
