@@ -16,7 +16,7 @@
 ## Sub-agents:
 [Reference From Langchain Docs](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents-personal-assistant)
 重点： **Agent即工具**
-![[../Image/Multi-Agents-subAgents.png]]
+![SubAgents](../Image/Multi-Agents-subAgents.png)
 配置了3个tool，挂载到了两个Agent上，然后又将这两个Agent配置成tool，挂载到supervisor上。由supervisor进行调用。
 ```python
 """
@@ -218,7 +218,7 @@ The email was successfully delivered to the recipient's inbox. Please note that 
 ```
 
 ## Handoffs
-![[../Image/Multi-Agents-Handoffs.png]]
+![Handoffs](../Image/Multi-Agents-Handoffs.png)
 
 提供支持的状态模板：
 ``` python
@@ -544,7 +544,7 @@ If you have any further questions or concerns, feel free to ask!
 
 ## Skill
 能力的动态加载。仅加载当前任务所需的技能。
-![[../Image/Pasted image 20260110121335.png]]
+![Skill](Multi-Agents-Skill.png)
 定义模型：
 ```python
 from langchain.agents import create_agent
@@ -880,7 +880,7 @@ This query:
 ```
 ## Route
 一种multiple agent的体系，将输入拆分成多个专业agents做，并总结出一个final answer。当多个领域垂直时，可以使用这种方式。如下，github/Notion/Slack agents的Route协同合作模式
-![[../Image/Pasted image 20260110144122.png]]
+![Multi-Agents-Route](Multi-Agents-Route.png)
 定义model
 ```python
 from langchain.agents import create_agent

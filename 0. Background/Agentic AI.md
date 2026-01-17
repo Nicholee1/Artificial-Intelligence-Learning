@@ -2,7 +2,7 @@
 ## Agentic AI的主流模式
 
 (究模智)[https://mp.weixin.qq.com/s/pvtNvL270C4USauwyY0YPA]
-![[../Image/Pasted image 20251122152911.png]]
+![Agentic AI](../Image/Agentic_ai.png)
 * Reflection Pattern: 通过“生成-校验-修正“ 的多轮闭环，提升大模型输出的准确性
 * Tool Use Pattern：外接向量数据库和Tools和APIs的常用模式，提升大模型获取外部知识的能力
 * ReAct（Reason and Act）：Reflection+ Tool Use 的结合，先推理明确llm需要哪些tool，调用tool之后再对tool的结果进行评估
