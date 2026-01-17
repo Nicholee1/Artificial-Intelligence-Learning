@@ -1,8 +1,9 @@
 - [Patterns](#Patterns)
-- [Sub-agents:](#Sub-agents:)
+- [Sub-agents](#Sub-agents)
 - [Handoffs](#Handoffs)
 - [Skill](#Skill)
 - [Route](#Route)
+
 
 ## Patterns
 
@@ -13,7 +14,7 @@
 | [**Skills**](https://docs.langchain.com/oss/python/langchain/multi-agent/skills)                   | （单一agent+动态Skills加载）特殊能力被打包成为Skills，单个agent可以按需加载skills<br>Specialized prompts and knowledge loaded on-demand. A single agent stays in control while loading context from skills as needed.                                                                       | 适合技能库场景，按需加载，减少上下文           | 优点： 简单，动态加载，减少上下文<br>缺点：不支持并行，无显示工作流     |
 | [**Router**](https://docs.langchain.com/oss/python/langchain/multi-agent/router)                   | 由Route agent决定调用几个具体的agent，结果再进行combined。<br>A routing step classifies input and directs it to one or more specialized agents. Results are synthesized into a combined response.                                                                                  | 需要并行查询多个数据源，查询可分解，需要明确的工作流控制 | 优点：并行执行，动态路由，工作流清晰<br>缺点：复杂度高，需要状态管理     |
 | [**Custom workflow**](https://docs.langchain.com/oss/python/langchain/multi-agent/custom-workflow) | <br>Build bespoke execution flows with [LangGraph](https://docs.langchain.com/oss/python/langgraph/overview), mixing deterministic logic and agentic behavior. Embed other patterns as nodes in your workflow.                                                    |                              |                                          |
-## Sub-agents:
+## Sub-agents
 [Reference From Langchain Docs](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents-personal-assistant)
 重点： **Agent即工具**
 ![SubAgents](../Image/Multi-Agents-subAgents.png)
@@ -544,7 +545,7 @@ If you have any further questions or concerns, feel free to ask!
 
 ## Skill
 能力的动态加载。仅加载当前任务所需的技能。
-![Skill](Multi-Agents-Skill.png)
+![Skill](../Image/Multi-Agents-Skill.png)
 定义模型：
 ```python
 from langchain.agents import create_agent
@@ -880,7 +881,7 @@ This query:
 ```
 ## Route
 一种multiple agent的体系，将输入拆分成多个专业agents做，并总结出一个final answer。当多个领域垂直时，可以使用这种方式。如下，github/Notion/Slack agents的Route协同合作模式
-![Multi-Agents-Route](Multi-Agents-Route.png)
+![Multi-Agents-Route](../Image/Multi-Agents-Route.png)
 定义model
 ```python
 from langchain.agents import create_agent
