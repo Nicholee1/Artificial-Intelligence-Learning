@@ -674,3 +674,74 @@ Now with a Hearing Aid feature.3
 A work of smart.
 ```
 
+```mermaid
+mindmap
+  root((Introduction to Agents))
+    定义与本质
+      组成
+        模型(脑)
+        工具(手)
+        编排层(神经系统)
+        部署服务(身体)
+      循环
+        Think-Act-Observe
+    五级能力模型
+      L0 核心推理系统
+      L1 连接型问题解决者
+      L2 策略型问题解决者
+      L3 协作型多智能体系统
+      L4 自我进化系统
+    核心架构
+      模型(脑)
+        推理与决策
+        多模态/工具调用
+      工具(手)
+        API
+        数据库
+        RAG
+        代码执行
+        HITL
+      编排层(神经系统)
+        管理循环与状态
+        记忆/计划/工具调用
+    工作流程
+      接收任务
+      感知环境
+      制定计划
+      执行行动
+      观察反馈
+    多智能体模式
+      Coordinator
+      Sequential
+      Iterative Refinement
+      HITL
+    部署与运维
+      评估机制
+        LM as Judge
+      可观测性
+        OpenTelemetry追踪
+      人类反馈
+      A/B测试
+    安全与治理
+      身份体系
+        智能体独立身份(SPIFFE)
+      权限控制
+        最小权限原则
+      防御机制
+        硬编码规则
+        AI审查模型
+        输入输出过滤
+    学习与进化
+      学习来源
+        运行时日志
+        人类反馈
+        新策略文档
+      进化方式
+        改进提示词与上下文
+        自动创建或优化工具
+        多智能体协作学习
+    前沿案例
+      Google Co-Scientist
+      AlphaEvolve
+```
+
