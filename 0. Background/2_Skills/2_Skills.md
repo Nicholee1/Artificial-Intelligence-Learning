@@ -22,7 +22,7 @@ Reference：
 通过 anthropic 提供的官方skills中的MCP builder, 构建一个web search的MCP Server
 https://github.com/anthropics/skills/tree/main/skills/mcp-builder
 
-![[Skiil_MCP_Builder.png]]
+![[../../Image/Skiil_MCP_Builder.png]]
 
 其中只有一个脚手架scaffold是自己填写的，主要就是配置本地的ollama模型-qwen3
 去加载这个Skill.md，相当于告诉model你应该怎么使用这个mcp-builder
@@ -416,7 +416,7 @@ if __name__ == "__main__":
 
 =================================================
 然后你就会获得一个websearch的MCP server
-![[Web_search_Mcp.png]]
+![[../../Image/Web_search_Mcp.png]]
 
 并可以通过client端进行访问
-![[Web_search_Mcp_client.png]]
+![[../../Image/Web_search_Mcp_client.png]]
