@@ -1,5 +1,16 @@
+## 文档摘要(Create by skill)
+本文档分为三部分：背景、MCP Builder实践和Skill Creator实践。
+背景部分指出Skills是渐进式披露的多能力调用框架，区别于MCP tools的全量上下文加载方式，可动态调用脚本工具。
+MCP Builder实践部分描述了基于Ollama模型的技能执行框架，通过解析SKILL.md文件实现用户请求与技能指南的匹配，生成具体执行步骤。文档引用了Anthropic Skills和国内技能平台作为参考。Skill Creator部分未展开具体内容，但结构上与MCP Builder并列。本文档核心在于说明Skills框架的渐进式能力调用机制及其实现方案。
+文档介绍了“markdown-summarizer”Skill，用于使用本地Ollama模型生成Markdown文档的中文摘要并插入至开头。包含功能说明、参数配置、使用方式及环境准备要求，提供命令行示例。结构包含Skill描述、脚本文件和参考文档，支持指定模型和文件路径进行文档处理。内容涵盖模型调用流程、参数定义及执行示例，说明需安装Ollama服务和Python依赖，通过脚本实现文档自动摘要功能。
+
 - [Background](#Background)
-- [Practice](#Practice)
+- [Practice-MCP-Builder](#Practice-MCP-Builder)
+	- [Implementation](#Implementation)
+	- [以下是输出](#%E4%BB%A5%E4%B8%8B%E6%98%AF%E8%BE%93%E5%87%BA)
+- [Practice-Skill-Creator](#Practice-Skill-Creator)
+	- [Implementation](#Implementation)
+	- [以下是输出](#%E4%BB%A5%E4%B8%8B%E6%98%AF%E8%BE%93%E5%87%BA)
 
 ## Background
 20260121, 阅读了卡兹克三篇关于Skills的讲解
@@ -18,10 +29,15 @@ Reference：
 [anthropics skills](https://github.com/anthropics/skills)
 [国内的技能应用平台](https://www.coze.cn/skills)
 
-## Practice
-通过 anthropic 提供的官方skills中的MCP builder, 构建一个web search的MCP Server
-https://github.com/anthropics/skills/tree/main/skills/mcp-builder
+## Practice-MCP-Builder
+ ```
+ 实验环境：
+ llm：qwen3:14b
+ target：通过 anthropic 提供的官方skills中的MCP builder, 构建一个web search的MCP Server
+ ```
 
+https://github.com/anthropics/skills/tree/main/skills/mcp-builder
+### Implementation
 ![Skiil_MCP_Builder.png](../../Image/Skiil_MCP_Builder.png)
 
 其中只有一个脚手架scaffold是自己填写的，主要就是配置本地的ollama模型-qwen3
@@ -187,7 +203,7 @@ if __name__ == "__main__":
 python scaffold.py --model qwen3:latest --input "帮我生成一个使用tavily-search的提供web search的MCP SERVER，只提供核心能力，不包含跨域和认证等功能，保证引入包和类的准确性，python实现"
 ```
 =======================================================================
-以下是输出
+### 以下是输出
 =======================================================================
 
 解析到的技能配置：
@@ -420,3 +436,228 @@ if __name__ == "__main__":
 
 并可以通过client端进行访问
 ![Web_search_Mcp_client](../../Image/Web_search_Mcp_client.png)
+
+
+## Practice-Skill-Creator
+https://github.com/anthropics/skills/tree/main/skills/skill-creator
+ Anthropic提供的生成skill的生成器，用来根据用户输入生成自己的skill
+ ```
+ 实验环境：
+ llm：qwen3:14b
+ target：生成一个可以帮助总结自己写的markdown的skill
+ ```
+ 
+### Implementation
+ 只是在官方的skills里增加了同样的脚手架
+ ![Skill_skill_creator](../../Image/Skill_skill_creator.png)
+
+根目录：
+
+| 文件          | 作用                                                                                                                                                                                             |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SKILL.md    | 技能说明文档。定义什么是 Skill、如何设计（简洁、自由度、结构）、SKILL.md 的 frontmatter/正文、scripts/references/assets 的用法、渐进式加载、不该放什么等；也指导如何写 name/description、何时用该技能。给「创建/更新技能」的人或 AI 用。                                     |
+| scaffold.py | 用本地 Ollama 跑「Skill Creator」的入口脚本。解析同目录的 SKILL.md（YAML frontmatter + Markdown），把「技能描述 + 流程说明」和用户输入拼成 prompt 发给 Ollama，按技能指南生成建议或步骤。支持 --model、--input、--skill-file、--no-run（只解析不调模型）。依赖 ollama。 |
+| LICENSE.txt | Apache License 2.0 全文，说明该技能/工具的许可条款。                                                                                                                                                           |
+ scripts/
+
+| 文件                | 作用                                                                                                                                                                                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| init_skill.py     | 新建技能脚手架。根据技能名和路径创建目录，并生成：带 TODO 的 SKILL.md 模板（含 name/description、Overview、Structuring 说明、Resources 说明）、scripts/example.py、references/api_reference.md、assets/example_asset.txt。用法：init_skill.py <skill-name> --path <path>。                                 |
+| package_skill.py  | 打包技能为 .skill 文件。先调用 quick_validate 校验技能目录（SKILL.md 存在且合法），通过后把整个技能目录打成 zip（.skill）。用法：package_skill.py <path/to/skill-folder> [output-directory]。                                                                                                           |
+| quick_validate.py | 技能目录快速校验。检查：是否存在 SKILL.md、是否有 YAML frontmatter、frontmatter 是否只含允许字段（name、description、license、allowed-tools、metadata）、name/description 是否存在且符合规范（name 为 hyphen-case、长度等；description 无尖括号、长度等）。被 package_skill 调用，也可单独运行：quick_validate.py <skill_directory>。 |
+ references/
+
+|文件|作用|
+|---|---|
+|output-patterns.md|技能「输出模式」参考：如 Template Pattern（严格/灵活的报告结构）、其它产出格式的约定。写 SKILL.md 时用来统一输出风格。|
+|workflows.md|技能「工作流」参考：顺序流程（步骤列表）、条件分支（根据任务类型选不同子流程）。写 SKILL.md 时用来设计步骤与分支。|
+当然，由于是连接本地的qwen模型进行的实验，所以 所有的输出都是文字化的，没办法体验全部功能，像calude 一样直接创建skill文件/
+但这不影响 对于skill creator的试验
+### 以下是输出
+```zsh
+python scaffold.py --model qwen3:14b --input "帮我生成一个可以使用本地ollama模型总结markdown文档的Skills，可以阅读一个md的文档，并在文档的开头部分对文档所记录的内容使用本地ollama模型进行总结,语言使用中文，请提供 完整的代码。"
+```
+ ```
+ 解析到的技能配置：
+  name: skill-creator
+  description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
+  license: Complete terms in LICENSE.txt
+
+使用模型: qwen3:14b
+ 用户请求: 帮我生成一个可以使用本地ollama模型总结markdown文档的Skills，可以阅读一个md的文档，并在文档的开头部分对文档所记录的内容使用本地ollama模型进行总结,语言使用中文，请提供完整的代码。
+----------------------------------------
+ ```
+```
+```
+技能执行结果：
+本地Ollama模型文档总结Skill设计指南
+项目结构
+```
+markdown-summarizer/
+├── SKILL.md
+├── scripts/
+│   └── summarize_md.py
+└── references/
+    └── ollama_api.md
+```
+SKILL.md 文件内容
+```markdown
+---
+name: markdown-summarizer
+description: 使用本地Ollama模型对Markdown文档进行智能总结，生成摘要并插入到文档开头
+---
+
+# Markdown文档智能总结Skill
+
+## 功能说明
+本Skill将执行以下操作：
+1. 读取指定路径的Markdown文件
+2. 使用本地Ollama模型生成中文摘要
+3. 将摘要插入到文档开头
+4. 保存修改后的文档到指定路径
+
+## 使用方式
+1. 确保Ollama服务正在运行（默认端口11434）
+2. 准备要处理的Markdown文件
+3. 调用`summarize_md.py`脚本并指定参数
+
+## 参数说明
+- `--input`：原始Markdown文件路径
+- `--output`：输出文件路径
+- `--model`：要使用的Ollama模型名称（默认：qwen）
+
+## 示例
+```bash
+python scripts/summarize_md.py --input document.md --output summarized.md --model qwen
+```
+```
+## 技术细节
+- 使用Ollama API进行模型调用
+- 摘要长度控制在原文的15%-20%
+- 支持中文和英文文档
+- 保留原始Markdown格式
+```
+脚本文件：scripts/summarize_md.py
+```python
+import argparse
+import requests
+import os
+import markdown
+
+def generate_summary(text, model="qwen", max_length=500):
+    """使用Ollama API生成摘要"""
+    url = "http://localhost:11434/api/generate"
+    payload = {
+        "model": model,
+        "prompt": f"请用中文为以下文档生成摘要（保持15%-20%原文长度）：\n\n{text}",
+        "temperature": 0.3,
+        "max_tokens": max_length
+    }
+    
+    response = requests.post(url, json=payload, stream=True)
+    
+    if response.status_code != 200:
+        raise Exception(f"Ollama API请求失败: {response.status_code}")
+    
+    summary = ""
+    for line in response.iter_lines():
+        if line:
+            data = line.decode('utf-8')
+            if '"response":' in data:
+                summary += data.split('"response":')[1].split(',')[0].strip().strip('"')
+    
+    return summary
+
+def process_markdown(input_path, output_path, model="qwen"):
+    """处理Markdown文件并插入摘要"""
+    with open(input_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+    
+    # 生成摘要
+    summary = generate_summary(content, model)
+    
+    # 将摘要插入到文档开头
+    modified_content = f"## 文档摘要\n\n{summary}\n\n{content}"
+    
+    # 保存结果
+    with open(output_path, 'w', encoding='utf-8') as file:
+        file.write(modified_content)
+    
+    return output_path
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Markdown文档智能总结工具")
+    parser.add_argument("--input", required=True, help="原始Markdown文件路径")
+    parser.add_argument("--output", required=True, help="输出文件路径")
+    parser.add_argument("--model", default="qwen", help="使用的Ollama模型名称")
+    
+    args = parser.parse_args()
+    
+    try:
+        result_path = process_markdown(args.input, args.output, args.model)
+        print(f"处理完成，输出文件保存至: {result_path}")
+    except Exception as e:
+        print(f"处理失败: {str(e)}")
+```
+参考文件：references/ollama_api.md
+```markdown
+# Ollama API使用指南
+
+## API端点
+- 本地服务地址：http://localhost:11434/api/generate
+
+## 请求参数
+- model: 要使用的模型名称（如qwen）
+- prompt: 要处理的文本内容
+- temperature: 生成温度值（0-1）
+- max_tokens: 最大生成长度
+
+## 响应格式
+- response: 生成的文本内容
+- done: 是否完成生成
+
+## 错误处理
+- 确保Ollama服务正在运行
+- 检查模型名称是否正确
+- 确保网络连接正常
+```
+使用说明
+
+1. **环境准备**
+   - 安装Ollama服务（https://ollama.com）
+   - 安装qwen模型（ollama pull qwen）
+   - 安装Python依赖：`pip install requests`
+
+2. **执行示例**
+   ```bash
+   python scripts/summarize_md.py \
+     --input ./example/document.md \
+     --output ./output/summarized.md \
+     --model qwen
+   ```
+
+3. **输出示例**
+   ```
+   ## 文档摘要
+   本文档记录了2023年第三季度的市场分析报告，重点分析了人工智能、云计算和区块链三个领域的最新发展趋势。报告指出AI领域投资增长35%，云服务市场规模突破2000亿美元，区块链技术在金融领域的应用案例增加50%。
+
+   # 2023年Q3市场分析报告
+   ...
+   ```
+扩展建议
+1. 可添加多模型支持（如chatglm、llama3）
+2. 可增加摘要长度控制参数
+3. 可添加Markdown格式保留/转换选项
+4. 可增加批量处理功能
+5. 可添加日志记录和错误重试机制
+
+然后根据这个脚本就可以每次对自己写的md进行总结～
+```zsh
+ python scripts/summarize_md.py \
+     --input 2_Skills.md \
+     --output summarized_14b.md \
+     --model qwen3:14b
+处理完成，输出文件保存至: summarized_14b.md
+```
+
+python summarize_md.py --input '/Users/licenhao/Documents/Obsidian Vault/Artificial Intelligence Practice/0. Background/2_Skills/2_Skills.md' --output summarized_14b.md --model qwen3:14b
