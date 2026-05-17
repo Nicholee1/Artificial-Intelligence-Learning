@@ -25,6 +25,9 @@ MCP Builder实践部分描述了基于Ollama模型的技能执行框架，通过
 而Skill自身，也不局限于prompt的渐进式披露，也可以包含可执行的脚本/工具的动态披露。
 让llm知道有哪些技能包，然后有选择的动态调用。
 
+20260315 Claudecode 模式下的skills拆解，主要是明确了动态加载skill的方式也可以是tool call
+https://mp.weixin.qq.com/s/5GiHG12HtcvL1MMVDgxMTw
+
 Reference：
 [anthropics skills](https://github.com/anthropics/skills)
 [国内的技能应用平台](https://www.coze.cn/skills)
